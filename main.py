@@ -644,3 +644,98 @@ plt.show()
 #   return ' '.join(text)
 
 # print(generate_text_seq(model, tokenizer, seq_length,seed_text, 100))
+
+
+#--------------------LSTM time series prediction---------------------
+# import numpy as np
+# import matplotlib.pyplot as plt
+# from pandas import read_csv
+# import math
+# from keras.models import Sequential
+# from keras.layers import Dense, LSTM, SimpleRNN
+# from sklearn.preprocessing import MinMaxScaler
+# from sklearn.metrics import mean_squared_error
+#
+# # load the dataset
+# dataframe = read_csv('images/csvsample2.csv', usecols=[1])
+# plt.plot(dataframe)
+#
+# # Convert pandas dataframe to numpy array
+# dataset = dataframe.values
+# dataset = dataset.astype('float32')  # COnvert values to float
+#
+# # Normalization is optional but recommended for neural network as certain
+# # activation functions are sensitive to magnitude of numbers.
+# # normalize the dataset
+# scaler = MinMaxScaler(feature_range=(0, 1))  # Also try QuantileTransformer
+# dataset = scaler.fit_transform(dataset)
+#
+# train_size = int(len(dataset) * 0.66)
+# test_size = len(dataset) - train_size
+# train, test = dataset[0:train_size, :], dataset[train_size:len(dataset), :]
+# seq_size = 4  # Number of time steps to look back
+#
+# from keras.preprocessing.sequence import TimeseriesGenerator  # Generates batches for sequence data
+#
+# batch_size = 1
+# train_generator = TimeseriesGenerator(train.reshape(-1), train.reshape(-1), length=seq_size, batch_size=batch_size)
+# print("Total number of samples in the original training data = ", len(train))  # 95
+# print("Total number of samples in the generated data = ", len(train_generator))  # 55
+# # With length 40 it generated 55 samples, each of length 40 (by using data of length 95)
+#
+# # print a couple of samples...
+# # x, y = train_generator[0]
+#
+# # Also generate validation data
+# validation_generator = TimeseriesGenerator(test.reshape(-1), test.reshape(-1), length=seq_size, batch_size=batch_size)
+#
+# ################################################
+# # Input dimensions are... (N x seq_size)
+# print('Build feed forward NN model...')
+# # create and fit dense model
+# model = Sequential()
+# model.add(Dense(64, input_dim=seq_size, activation='relu'))  # 12
+# model.add(Dense(32, activation='relu'))  # 8
+# model.add(Dense(1))
+# model.compile(loss='mean_squared_error', optimizer='adam', metrics=['acc'])
+# print(model.summary())
+#
+# ######################################################
+# model.fit_generator(generator=train_generator, verbose=2, epochs=100, validation_data=validation_generator)
+#
+# # make predictions
+#
+# trainPredict = model.predict(train_generator)
+# testPredict = model.predict(validation_generator)
+#
+# trainPredict = scaler.inverse_transform(trainPredict)
+# trainY_inverse = scaler.inverse_transform(train)
+# testPredict = scaler.inverse_transform(testPredict)
+# testY_inverse = scaler.inverse_transform(test)
+#
+# # calculate root mean squared error
+# trainScore = math.sqrt(mean_squared_error(trainY_inverse[seq_size:], trainPredict[:, 0]))
+# print('Train Score: %.2f RMSE' % (trainScore))
+#
+# testScore = math.sqrt(mean_squared_error(testY_inverse[seq_size:], testPredict[:, 0]))
+# print('Test Score: %.2f RMSE' % (testScore))
+#
+# # shift train predictions for plotting
+# # we must shift the predictions so that they align on the x-axis with the original dataset.
+# trainPredictPlot = np.empty_like(dataset)
+# trainPredictPlot[:, :] = np.nan
+# trainPredictPlot[seq_size:len(trainPredict) + seq_size, :] = trainPredict
+#
+# # shift test predictions for plotting
+# testPredictPlot = np.empty_like(dataset)
+# testPredictPlot[:, :] = np.nan
+# # testPredictPlot[len(trainPredict)+(seq_size*2)-1:len(dataset)-1, :] = testPredict
+# testPredictPlot[len(train) + (seq_size) - 1:len(dataset) - 1, :] = testPredict
+#
+# # plot baseline and predictions
+# plt.plot(scaler.inverse_transform(dataset))
+# plt.plot(trainPredictPlot)
+# plt.plot(testPredictPlot)
+# plt.show()
+
+v
